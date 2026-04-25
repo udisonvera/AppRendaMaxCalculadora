@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestCalc Retail | Simulador de Investimentos para Lojistas</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <!-- Chart.js para gráficos profissionais -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at 20% 50%, #0f172a 0%, #020617 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .input-fancy {
+            transition: all 0.2s ease;
+        }
+        .input-fancy:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        .input-fancy.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -8px rgba(37,99,235,0.4);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 15px 25px -10px rgba(37,99,235,0.5);
+            transform: translateY(-2px);
+        }
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #334155;
+            outline: none;
+        }
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(59,130,246,0.5);
+            transition: 0.15s;
+        }
+        .range-slider::-webkit-slider-thumb:hover {
+            background: #2563eb;
+            transform: scale(1.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-height: 260px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                max-height: 220px;
+            }
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 md:p-6 lg:p-8">
+
+    <div class="w-full max-w-6xl mx-auto">
+        
+        <!-- Header profissional -->
+        <div class="mb-10 text-center md:text-left md:flex md:items-end md:justify-between">
+            <div>
+                <div class="flex items-center justify-center md:justify-start gap-3 mb-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                        InvestCalc <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Retail</span>
+                    </h1>
+                </div>
+                <p class="text-slate-400 text-sm md:text-base max-w-xl mt-1">
+                    Planeje o crescimento do seu negócio com simulações reais de rentabilidade.
+                </p>
+            </div>
+            <div class="hidden md:block">
+                <span class="badge bg-blue-500/15 text-blue-300 border border-blue-500/25">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    Simulação segura
+                </span>
+            </div>
+        </div>
+
+        <!-- Grid principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
+            
+            <!-- Painel de Parâmetros (2 colunas no grid de 5) -->
+            <div class="lg:col-span-2">
+                <div class="glass-card p-6 md:p-8 rounded-3xl h-full flex flex-col">
+                    <div class="flex items-center gap-3 mb-7">
+                        <div class="w-8 h-8 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-white">Parâmetros da Simulação</h2>
+                    </div>
+
+                    <div class="space-y-6 flex-grow">
+                        <!-- Investimento Inicial -->
+                        <div>
+                            <label for="capital" class="block text-sm font-medium text-slate-300 mb-1.5">
+                                💰 Investimento Inicial (R$)
+                            </label>
+                            <input type="number" id="capital" placeholder="Ex: 50.000,00" min="0" step="100" value="50000"
+                                class="input-fancy w-full bg-slate-800/40 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none">
+                            <p class="text-xs text-slate-500 mt-1">Capital disponível para iniciar a operação.</p>
+                        </div>
+
+                        <!-- Aporte Mensal -->
+                        <div>
+                            <label for="aporte" class="block text-sm font-medium text-slate-300 mb-1.5">
+                                📆 Aporte Mensal (R$)
+                            </label>
+                            <input type="number" id="aporte" placeholder="Ex: 2.000,00" min="0" step="100" value="2000"
+                                class="input-fancy w-full bg-slate-800/40 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none">
+                            <p class="text-xs text-slate-500 mt-1">Valor reinvestido mensalmente no negócio.</p>
+                        </div>
+
+                        <!-- Taxa e Tempo lado a lado -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="taxa" class="block text-sm font-medium text-slate-300 mb-1.5">
+                                    📈 Taxa Mensal (%)
+                                </label>
+                                <input type="number" id="taxa" placeholder="1.0" min="0" step="0.1" value="1.0"
+                                    class="input-fancy w-full bg-slate-800/40 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="tempo" class="block text-sm font-medium text-slate-300 mb-1.5">
+                                    ⏳ Período (meses)
+                                </label>
+                                <input type="number" id="tempo" placeholder="24" min="1" max="360" step="1" value="24"
+                                    class="input-fancy w-full bg-slate-800/40 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Slider de meses (interatividade) -->
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-2">
+                                <span>1 mês</span>
+                                <span id="slider-value-display" class="text-blue-400 font-semibold">24 meses</span>
+                                <span>360 meses</span>
+                            </div>
+                            <input type="range" id="tempo-slider" min="1" max="360" value="24"
+                                class="range-slider"
+                                oninput="syncSliderWithInput(this.value)">
+                        </div>
+
+                        <!-- Botões de ação -->
+                        <div class="flex gap-3 pt-2">
+                            <button onclick="calcular(false)" id="btn-calcular"
+                                class="btn-primary flex-1 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                Calcular Projeção
+                            </button>
+                            <button onclick="limparCampos()"
+                                class="px-4 py-3.5 rounded-xl border border-slate-700/60 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all flex items-center justify-center"
+                                title="Limpar campos">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-3 bg-yellow-500/5 border border-yellow-500/15 rounded-xl text-xs text-yellow-200/80 flex items-start gap-2">
+                        <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Simulação baseada em juros compostos com aportes ao final de cada mês. Rentabilidade passada não garante resultados futuros.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Resultados e Gráfico (3 colunas no grid de 5) -->
+            <div class="lg:col-span-3 flex flex-col gap-6">
+                
+                <!-- Cards de indicadores -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-l-blue-500 flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Montante Final</span>
+                        <div id="resultado-total" class="text-2xl sm:text-3xl font-bold text-white mt-2 truncate">R$ 0,00</div>
+                        <div class="mt-1 text-xs text-slate-500">Valor bruto projetado</div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-500 flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ganho com Juros</span>
+                        <div id="res-juros" class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-2 truncate">R$ 0,00</div>
+                        <div id="rentabilidade-badge" class="mt-1 text-xs font-medium text-emerald-300">+0%</div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-l-purple-500 flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Investido</span>
+                        <div id="res-investido" class="text-2xl sm:text-3xl font-bold text-white mt-2 truncate">R$ 0,00</div>
+                        <div class="mt-1 text-xs text-slate-500">Capital + Aportes</div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de evolução -->
+                <div class="glass-card p-5 md:p-6 rounded-2xl flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                            </svg>
+                            Projeção de Crescimento
+                        </h3>
+                        <span id="chart-total-label" class="text-xs text-slate-400 bg-slate-800/50 px-3 py-1 rounded-full">24 meses</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoEvolucao" width="400" height="200"></canvas>
+                    </div>
+                    <div class="flex justify-center gap-6 mt-3 text-xs text-slate-400">
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span> Montante Total</div>
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-600 inline-block"></span> Valor Investido</div>
+                    </div>
+                </div>
+
+                <!-- Resumo detalhado -->
+                <div class="glass-card p-6 rounded-2xl">
+                    <h3 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Detalhamento
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-700/40">
+                            <span class="text-slate-400 text-sm">Rentabilidade Total</span>
+                            <span id="res-porcentagem" class="text-blue-400 font-semibold text-lg">0%</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-700/40">
+                            <span class="text-slate-400 text-sm">Múltiplo do Capital</span>
+                            <span id="res-multiplo" class="text-white font-medium">1.00x</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400 text-sm">Média de Juros/Mês</span>
+                            <span id="res-media-juros" class="text-white font-medium">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer discreto -->
+        <div class="mt-10 text-center text-xs text-slate-600">
+            &copy; <span id="current-year"></span> InvestCalc Retail — Ferramenta educacional de simulação financeira. Não constitui recomendação de investimento.
+        </div>
+    </div>
+
+    <script>
+        // ---------- Referências aos elementos DOM ----------
+        const inputCapital = document.getElementById('capital');
+        const inputAporte = document.getElementById('aporte');
+        const inputTaxa = document.getElementById('taxa');
+        const inputTempo = document.getElementById('tempo');
+        const sliderTempo = document.getElementById('tempo-slider');
+        const sliderDisplay = document.getElementById('slider-value-display');
+
+        const resultadoTotal = document.getElementById('resultado-total');
+        const resInvestido = document.getElementById('res-investido');
+        const resJuros = document.getElementById('res-juros');
+        const resPorcentagem = document.getElementById('res-porcentagem');
+        const resMultiplo = document.getElementById('res-multiplo');
+        const resMediaJuros = document.getElementById('res-media-juros');
+        const rentabilidadeBadge = document.getElementById('rentabilidade-badge');
+        const chartTotalLabel = document.getElementById('chart-total-label');
+
+        // Gráfico (instância será criada depois)
+        let chartInstance = null;
+        const ctx = document.getElementById('graficoEvolucao').getContext('2d');
+
+        // ---------- Funções auxiliares ----------
+        const formatarMoeda = (valor) => {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
+
+        const formatarPorcentagem = (valor) => {
+            return valor.toFixed(2) + '%';
+        };
+
+        // Sincroniza slider <-> input de meses
+        function syncSliderWithInput(value) {
+            const val = parseInt(value, 10);
+            if (inputTempo.value != val) {
+                inputTempo.value = val;
+            }
+            sliderDisplay.textContent = val + (val === 1 ? ' mês' : ' meses');
+            calcular(true); // recalcula automaticamente ao mexer no slider
+        }
+
+        // Sincroniza input -> slider
+        function syncInputWithSlider(value) {
+            const val = parseInt(value, 10) || 1;
+            const clamped = Math.min(360, Math.max(1, val));
+            if (sliderTempo.value != clamped) {
+                sliderTempo.value = clamped;
+                sliderDisplay.textContent = clamped + (clamped === 1 ? ' mês' : ' meses');
+            }
+            calcular(true);
+        }
+
+        // Limpar campos e resetar
+        function limparCampos() {
+            inputCapital.value = 50000;
+            inputAporte.value = 2000;
+            inputTaxa.value = 1.0;
+            inputTempo.value = 24;
+            sliderTempo.value = 24;
+            sliderDisplay.textContent = '24 meses';
+            // Remove classe de erro se houver
+            [inputCapital, inputAporte, inputTaxa, inputTempo].forEach(el => el.classList.remove('error'));
+            calcular(true);
+        }
+
+        // Validação visual simples
+        function validarCampos() {
+            let valido = true;
+            const campos = [
+                { el: inputCapital, cond: parseFloat(inputCapital.value) >= 0 },
+                { el: inputAporte, cond: parseFloat(inputAporte.value) >= 0 },
+                { el: inputTaxa, cond: parseFloat(inputTaxa.value) >= 0 },
+                { el: inputTempo, cond: parseInt(inputTempo.value) >= 1 && parseInt(inputTempo.value) <= 360 }
+            ];
+            campos.forEach(c => {
+                if (!c.cond) {
+                    c.el.classList.add('error');
+                    valido = false;
+                } else {
+                    c.el.classList.remove('error');
+                }
+            });
+            return valido;
+        }
+
+        // ---------- Cálculo principal ----------
+        function calcular(silencioso = false) {
+            if (!validarCampos() && !silencioso) {
+                // Se não for silencioso, mostra alerta
+                alert('Por favor, preencha todos os campos com valores válidos.');
+                return;
+            }
+
+            const P = parseFloat(inputCapital.value) || 0;
+            const PMT = parseFloat(inputAporte.value) || 0;
+            const i = (parseFloat(inputTaxa.value) || 0) / 100;
+            const n = parseInt(inputTempo.value) || 0;
+
+            if (n <= 0) {
+                if (!silencioso) alert('O período deve ser de pelo menos 1 mês.');
+                return;
+            }
+
+            // Fórmula de juros compostos com aportes
+            const montanteCapital = P * Math.pow((1 + i), n);
+            const montanteAportes = (i === 0) ? PMT * n : PMT * ((Math.pow(1 + i, n) - 1) / i);
+            const totalFinal = montanteCapital + montanteAportes;
+            const totalInvestido = P + (PMT * n);
+            const totalJuros = totalFinal - totalInvestido;
+            const rentabilidade = totalInvestido > 0 ? ((totalFinal / totalInvestido) - 1) * 100 : 0;
+            const multiplo = totalInvestido > 0 ? totalFinal / totalInvestido : 1;
+            const mediaJurosMes = n > 0 ? totalJuros / n : 0;
+
+            // Atualiza os cards
+            resultadoTotal.textContent = formatarMoeda(totalFinal);
+            resInvestido.textContent = formatarMoeda(totalInvestido);
+            resJuros.textContent = formatarMoeda(totalJuros);
+            resPorcentagem.textContent = formatarPorcentagem(rentabilidade);
+            resMultiplo.textContent = multiplo.toFixed(2) + 'x';
+            resMediaJuros.textContent = formatarMoeda(mediaJurosMes);
+            
+            // Badge de rentabilidade
+            if (rentabilidade > 50) {
+                rentabilidadeBadge.textContent = '🔝 +' + formatarPorcentagem(rentabilidade);
+                rentabilidadeBadge.className = 'mt-1 text-xs font-medium text-emerald-300';
+            } else if (rentabilidade > 10) {
+                rentabilidadeBadge.textContent = '👍 +' + formatarPorcentagem(rentabilidade);
+                rentabilidadeBadge.className = 'mt-1 text-xs font-medium text-emerald-300';
+            } else if (rentabilidade >= 0) {
+                rentabilidadeBadge.textContent = '+' + formatarPorcentagem(rentabilidade);
+                rentabilidadeBadge.className = 'mt-1 text-xs font-medium text-blue-300';
+            } else {
+                rentabilidadeBadge.textContent = formatarPorcentagem(rentabilidade);
+                rentabilidadeBadge.className = 'mt-1 text-xs font-medium text-red-400';
+            }
+
+            chartTotalLabel.textContent = n + (n === 1 ? ' mês' : ' meses');
+
+            // Gera dados para o gráfico
+            const labels = [];
+            const dataMontante = [];
+            const dataInvestido = [];
+
+            for (let t = 0; t <= n; t++) {
+                labels.push(t === 0 ? 'Início' : 'Mês ' + t);
+                const cap = P * Math.pow((1 + i), t);
+                const aport = (i === 0) ? PMT * t : PMT * ((Math.pow(1 + i, t) - 1) / i);
+                const montante = cap + aport;
+                const investidoAcum = P + PMT * t;
+                dataMontante.push(parseFloat(montante.toFixed(2)));
+                dataInvestido.push(parseFloat(investidoAcum.toFixed(2)));
+            }
+
+            // Desenha ou atualiza o gráfico
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = dataMontante;
+                chartInstance.data.datasets[1].data = dataInvestido;
+                chartInstance.update();
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Montante Total',
+                                data: dataMontante,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59,130,246,0.08)',
+                                borderWidth: 2.5,
+                                tension: 0.35,
+                                fill: true,
+                                pointRadius: 0,
+                                pointHoverRadius: 6,
+                                pointHoverBackgroundColor: '#3b82f6',
+                                pointHoverBorderColor: '#fff',
+                                pointHoverBorderWidth: 2,
+                            },
+                            {
+                                label: 'Valor Investido',
+                                data: dataInvestido,
+                                borderColor: '#64748b',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [6, 4],
+                                tension: 0.35,
+                                fill: false,
+                                pointRadius: 0,
+                                pointHoverRadius: 5,
+                                pointHoverBackgroundColor: '#94a3b8',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1e293b',
+                                titleColor: '#f1f5f9',
+                                bodyColor: '#cbd5e1',
+                                borderColor: '#334155',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                padding: 10,
+                                callbacks: {
+                                    label: (ctx) => {
+                                        return ctx.dataset.label + ': ' + formatarMoeda(ctx.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    maxTicksLimit: 10,
+                                    font: { size: 10 }
+                                }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { 
+                                    color: '#94a3b8',
+                                    font: { size: 10 },
+                                    callback: (val) => {
+                                        if (val >= 1000) return 'R$ ' + (val/1000).toFixed(0) + 'k';
+                                        return 'R$ ' + val;
+                                    }
+                                },
+                                beginAtZero: true,
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ---------- Event Listeners ----------
+        // Recalcular ao digitar (com pequeno debounce para performance)
+        let debounceTimer;
+        const debounceRecalcular = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => calcular(true), 400);
+        };
+
+        [inputCapital, inputAporte, inputTaxa].forEach(el => {
+            el.addEventListener('input', debounceRecalcular);
+        });
+
+        inputTempo.addEventListener('input', (e) => {
+            syncInputWithSlider(e.target.value);
+            debounceRecalcular();
+        });
+
+        sliderTempo.addEventListener('input', (e) => {
+            syncSliderWithInput(e.target.value);
+            // o syncSliderWithInput já chama calcular
+        });
+
+        // Também recalcular ao perder o foco para garantir
+        [inputCapital, inputAporte, inputTaxa, inputTempo].forEach(el => {
+            el.addEventListener('blur', () => calcular(true));
+        });
+
+        // Ao pressionar Enter, calcula com feedback visual (não silencioso)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement && document.activeElement.tagName === 'INPUT') {
+                calcular(false);
+            }
+        });
+
+        // ---------- Inicialização ----------
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Gatilho inicial
+        window.addEventListener('DOMContentLoaded', () => {
+            // Garante que slider e input estejam sincronizados
+            sliderTempo.value = inputTempo.value;
+            sliderDisplay.textContent = inputTempo.value + (parseInt(inputTempo.value) === 1 ? ' mês' : ' meses');
+            calcular(true);
+        });
+    </script>
+</body>
+</html>
